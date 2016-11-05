@@ -1,3 +1,8 @@
+<!--
+rabbitmq 10.0.68.69
+Haruna
+moegirl
+queque-->
 <!doctype html>
 <html class="no-js" lang="">
 <head>
@@ -110,7 +115,7 @@
                 <!-- Header About -->
                 <div class="row header_text">
                     <div class="col-md-6 col-sm-12 col-xs-12">
-                       <h2><span>欢迎来到 </span></h2> <br/>
+                       <h2><span></span></h2> <br/>
                             <h1>漏洞检测平台</h1>
                     </div>
                     <div class="col-md-6 "></div>

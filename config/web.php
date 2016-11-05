@@ -7,18 +7,38 @@ $config = [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'defaultRoute' => 'index',
-    'components' => [
+    /*'modules' => [
+        'v1' => [
+            'class' => 'api\modules\v1\Module',
+        ],
+    ],*/
+     'components' => [
+        /*'urlManager' => [
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+            'enableStrictParsing' =>true,
+            'rules' => [
+                [
+                    'class'  => 'yii\rest\UrlRule',
+                    'controller'  => 'api/v1/users'
+                ]
+            ],
+        ],*/
+
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'Cxn02XTcPp7C8mDDzB5FcFS0iWnUMa-e',
+  /*          'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]*/
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
-        'user' => [
-            'identityClass' => 'app\models\User',
-            'enableAutoLogin' => true,
-        ],
+//        'user' => [
+//            'identityClass' => 'app\models\User',
+//            'enableAutoLogin' => false,
+//        ],
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
@@ -39,16 +59,8 @@ $config = [
             ],
         ],
         'db' => require(__DIR__ . '/db.php'),
-        /*
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [
-            ],
-        ],
-        */
-    ],
-    'params' => $params,
+     ],
+        'params' => $params,
 ];
 
 if (YII_ENV_DEV) {

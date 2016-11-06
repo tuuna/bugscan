@@ -9,6 +9,7 @@
 namespace app\models;
 use yii\db\ActiveRecord;
 use Yii;
+use yii\base\Model;
 class User extends ActiveRecord
 {
 
@@ -21,10 +22,13 @@ class User extends ActiveRecord
     public function rules()
     {
         return [
-            ['username','required','message' => '用户名不能为空','on' => ['reg','login']],
+            ['username','required','message' => '用户名不能为空','on' => ['reg','login',Model::SCENARIO_DEFAULT]],
+//            ['username','required','message' => '用户名不能为空'],
             ['username','unique','message' => '用户名已被注册','on' => 'reg'],
-            ['password','required','message' => '密码不能为空','on'=> ['reg','login']],
-            ['email','required','message' => '邮箱不能为空','on' => 'reg'],
+            ['password','required','message' => '密码不能为空','on'=> ['reg','login',Model::SCENARIO_DEFAULT]],
+//            ['password','required','message' => '密码不能为空'],
+            ['email','required','message' => '邮箱不能为空','on' => ['reg',Model::SCENARIO_DEFAULT]],
+//            ['email','required','message' => '邮箱不能为空'],
             ['email','email','message' => '邮箱格式不正确','on' => 'reg'],
             ['email','unique','message' => '邮箱已被注册','on' => 'reg'],
             ['password','validatePass','on' => 'login']

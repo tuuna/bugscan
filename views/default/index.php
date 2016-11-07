@@ -40,7 +40,26 @@
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
             $("a[rel^='prettyPhoto']").prettyPhoto();
+            var wsServer = 'ws://127.0.0.1:8083';
+            var ws = new WebSocket(wsServer);
+            ws.onopen = function(){
+                console.log("握手成功");
+            };
+            ws.onerror = function(){
+                console.log("error");
+            };
+            function getMsg() {
+                if($("input[sql]").value == 1 && $("input[xor]").value != 1 && $("input[other]").value == '') {
+                    ws.send($("input[your-domain]").value + '-' + 'sql');
+                } else if($("input[sql]").value != 0 && $("input[xor]").value == 1 && $("input[other]").value == '') {
+                    ws.send($("input[your-domain]").value + '-' + 'xor');
+                } else if($("input[sql]").value != 1 && $("input[xor]").value != 1 && $("input[other]").value != '')
+                    ws.send($("input[your-domain]").value + '-' + $("input[other]").value);
+            }
         });
+
+        $('sub').addEventListener('click', getMsg, false);
+
     </script>
 </head>
 <body>
@@ -76,9 +95,13 @@
         <div class="container">
             <div class="row">
                 <div class="span12">
-                    <h2>输入您要检测的域名，下方实时显示检测结果</h2>
-                    <input type="text" name="your-email" placeholder="域名..." class="cform-text" size="40" title="your email">
-                    <input type="submit" value="开始检测" class="cform-submit">
+                    <h2>输入您要检测的域名，并选择脚本类型，下方实时显示检测结果</h2>
+                    <input type="text" name="your-domain" placeholder="域名..." class="cform-text" size="40" title="your email">
+                    <br>
+                    <input type="checkbox" value="sql注入" name="sql" id="sql"><span style="color: white">sql注入</span>
+                    <input type="checkbox" value="XOR" name="xor" id="xor"><span style="color:white">XOR</span>
+                    <input type="text" placeholder="输入您已经上传的脚本的名字" id="other" name="other" class = 'col-md-4' style="height: 10px;width: 300px">其它
+                    <input type="submit" value="开始检测" class="cform-submit" id = "sub" name="sub">
                 </div>
             </div>
             <div class="row">

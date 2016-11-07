@@ -20,137 +20,220 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class DefaultController extends Controller {
 
+    public function actionIndex()
+    {
+        static $k = 0;
+        $msgs = [];
+        $msg = [];
+        $socket_msg = new WS('127.0.0.1','8083');
+        echo $socket_msg;
+        $fibonacci_rpc = new FibonacciRpcClient();
+        $responses = $fibonacci_rpc->call('script');
+        foreach ((array)$responses as $key => $response) {
+            if($response != 'end') {
+                $msg[$key] = $response;
+            } else {
+                for($i = 0; $i<count($msg);$i++) {
+                    $msgs[$k][$i] = $msg;
+                }
+                $k++;
+                $msg = [];
+                continue;
+            }
+        }
+
+//        var_dump(" [.] Got ", $msgs, "\n") ;
+        return $this->renderPartial('index',['msg' => $msgs]);
+    }
+}
+
+class FibonacciRpcClient {
+    private $connection;
+    private $channel;
+    private $callback_queue;
+    private $response;
+    private $corr_id;
+    private $result = '';
+
     CONST HOST = "10.0.153.80";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";
-    public function actionIndex() {
-        $datas = $this->helloWolrd();
-        var_dump($datas);
-        return $this->renderPartial('index');
+
+    public function __construct() {
+        $this->connection = new AMQPStreamConnection(
+            self::HOST, self::PORT, self::USER, self::PASS);
+        $this->channel = $this->connection->channel();
+        list($this->callback_queue, ,) = $this->channel->queue_declare(
+            "", false, false, true, false);
+        $this->channel->basic_consume(
+            $this->callback_queue, '', false, false, false, false,
+            array($this, 'on_response'));
     }
-
-    /**
-     * RabbitMq Demo
-     */
-    public function actionRabbitMq()
-    {
-        $this->helloWolrd();
-        return $this->renderPartial('index');
- //       $this->workQueues();
-    }
-
-
-    /**
-     * case 1: "Hello World!"
-     */
-    private function helloWolrd()
-    {
-        echo "CASE 1: HELLO WORLD..................\n";
-        $this->send('queue',"Hi,test");
-        $this->recieve('queue');
-    }
-
-    private function send($queue,$msgs)
-    {
-        $connection = new AMQPStreamConnection(self::HOST, self::PORT, self::USER, self::PASS,'/');
-        $channel = $connection->channel();
-        //queue              : 队列名称
-        //passive            ：当队列不存在时会抛出一个错误信息，仍然不会被声明。
-        //durable            ：队列将在broker重启时启动。
-        //exclusive          ：队列仅服务于一个客户端。
-        //auto-delete        ：队列在没有活跃订阅者的时候将自动删除。这个类似于具有auto-delete属性的交换器：如果队
-        $channel->queue_declare($queue, false, false, true, false);
-
-        $msg = new AMQPMessage($msgs);
-        $channel->basic_publish($msg,'',$queue);
-        /*foreach($msgs as $m){
-            $msg = new AMQPMessage($m);
-            //直接扔到队列中，第三个参数routing_key这里配置的是上边声明的queue的名称
-            $channel->basic_publish($msg, '',$queue);
-            echo " [x] Sent message '".$m."'\n";
-        }*/
-        $channel->close();
-        $connection->close();
-    }
-
-    private function recieve($queue)
-    {
-        $connection = new AMQPStreamConnection(self::HOST, self::PORT, self::USER, self::PASS);
-        $channel = $connection->channel();
-        $channel->queue_declare($queue, false, false, true, false);
-
-        $callback = function($msg) {
-            echo " [x] Received ", $msg->body, "\n";
-        };
-        $channel->basic_consume($queue, '', false, true, false, false, $callback);
-
-        while(count($channel->callbacks)) {
-            echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
-            sleep(1);
-            $channel->wait();
+    public function on_response($rep) {
+        if($rep->get('correlation_id') == $this->corr_id) {
+            $this->result .= $rep->body;
+            $this->response = $rep->body;
         }
-        $channel->close();
-        $connection->close();
     }
 
-    /**
-     * case 2: Work queues
-     */
-   /* private function workQueues()
-    {
-        echo "CASE 2: Work queues..................\n";
-        $this->send2('task_queue',["This is hard task which takes 2 seconds.."]);
-        $this->recieve2('task_queue');
+    public function call($n) {
+        $this->response = null;
+        $this->corr_id = uniqid();
 
-    }
-
-    private function send2($queue,$msgs=[])
-    {
-        $connection = new AMQPStreamConnection(self::HOST, self::PORT, self::USER, self::PASS);
-        $channel = $connection->channel();
-        //queue              : 队列名称
-        //passive            ：当队列不存在时会抛出一个错误信息，仍然不会被声明。
-        //durable            ：队列将在broker重启时启动。
-        //exclusive          ：队列仅服务于一个客户端。
-        //auto-delete        ：队列在没有活跃订阅者的时候将自动删除。这个类似于具有auto-delete属性的交换器：如果队
-        $channel->queue_declare($queue, false, true, false, false);
-        foreach($msgs as $m){
-            $msg = new AMQPMessage($m);
-            //直接扔到队列中，第三个参数routing_key这里配置的是上边声明的queue的名称
-            $channel->basic_publish($msg, '',$queue);
-            echo " [x] Sent message '".$m."'\n";
+        $msg = new AMQPMessage(
+            (string) $n,
+            array('correlation_id' => $this->corr_id,
+                'reply_to' => $this->callback_queue)
+        );
+        $this->channel->basic_publish($msg, '', 'queue');
+        while($this->response != "end") {
+            $this->channel->wait();
         }
-        $channel->close();
-        $connection->close();
+        return $this->result;
     }
+}
 
+Class WS {
+    var $master;
+    var $sockets = array();
+    var $debug = false;
+    var $handshake = false;
 
-    private function recieve2($queue)
-    {
-        $connection = new AMQPStreamConnection(self::HOST, self::PORT, self::USER, self::PASS);
-        $channel = $connection->channel();
-        $channel->queue_declare($queue, false, true, false, false);
+    function __construct($address, $port){
+        $this->master=socket_create(AF_INET, SOCK_STREAM, SOL_TCP)     or die("socket_create() failed");
+        socket_set_option($this->master, SOL_SOCKET, SO_REUSEADDR, 1)  or die("socket_option() failed");
+        socket_bind($this->master, $address, $port)                    or die("socket_bind() failed");
+        socket_listen($this->master,20)                                or die("socket_listen() failed");
 
-        $callback = function($msg) {
-            echo " [x] Received ", $msg->body, "\n";
-            sleep(substr_count($msg->body, '.'));
-            echo " [x] Done", "\n";
-            //发送消息确认
-            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-        };
-        //prefetch_count =1 表示队列一次只能给消费者一条消息，直到消费者处理完毕并确认
-        $channel->basic_qos(null, 1, null);
-        //需要消息确认
-        $channel->basic_consume($queue, '', false, false, false, false, $callback);
+        $this->sockets[] = $this->master;
+        $this->say("Server Started : ".date('Y-m-d H:i:s'));
+        $this->say("Listening on   : ".$address." port ".$port);
+        $this->say("Master socket  : ".$this->master."\n");
 
-        while(count($channel->callbacks)) {
-            $channel->wait();
+        while(true){
+            $socketArr = $this->sockets;
+            $write = NULL;
+            $except = NULL;
+            socket_select($socketArr, $write, $except, NULL);  //自动选择来消息的socket 如果是握手 自动选择主机
+            foreach ($socketArr as $socket){
+                if ($socket == $this->master){  //主机
+                    $client = socket_accept($this->master);
+                    if ($client < 0){
+                        $this->log("socket_accept() failed");
+                        continue;
+                    } else{
+                        $this->connect($client);
+                    }
+                } else {
+                    $this->log("^^^^");
+                    $bytes = @socket_recv($socket,$buffer,2048,0);
+                    $this->log("^^^^");
+                    if ($bytes == 0){
+                        $this->disConnect($socket);
+                    }
+                    else{
+                        if (!$this->handshake){
+                            $this->doHandShake($socket, $buffer);
+                        }
+                        else{
+                            $buffer = $this->decode($buffer);
+                            return $this->send($socket, $buffer);
+                        }
+                    }
+                }
+            }
         }
-        $channel->close();
-        $connection->close();
-    }*/
+    }
+    function connect($socket){
+        array_push($this->sockets, $socket);
+        $this->say("\n" . $socket . " CONNECTED!");
+        $this->say(date("Y-n-d H:i:s"));
+    }
+    function disConnect($socket){
+        $index = array_search($socket, $this->sockets);
+        socket_close($socket);
+        $this->say($socket . " DISCONNECTED!");
+        if ($index >= 0){
+            array_splice($this->sockets, $index, 1);
+        }
+    }
+        function getKey($req) {
+            $key = null;
+            if (preg_match("/Sec-WebSocket-Key: (.*)\r\n/", $req, $match)) {
+                $key = $match[1];
+            }
+            return $key;
+        }
+        function encry($req){
+            $key = $this->getKey($req);
+            $mask = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
+            return base64_encode(sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+        }
+        function dohandshake($socket, $req){
+            // 获取加密key
+            $acceptKey = $this->encry($req);
+            $upgrade = "HTTP/1.1 101 Switching Protocols\r\n" .
+                "Upgrade: websocket\r\n" .
+                "Connection: Upgrade\r\n" .
+                "Sec-WebSocket-Accept: " . $acceptKey . "\r\n" .
+                "\r\n";
 
+            // 写入socket
+            socket_write(socket,$upgrade.chr(0), strlen($upgrade.chr(0)));
+            // 标记握手已经成功，下次接受数据采用数据帧格式
+            $this->handshake = true;
+        }
+        function decode($buffer)  {
+            $len = $masks = $data = $decoded = null;
+            $len = ord($buffer[1]) & 127;
+
+            if ($len === 126)  {
+                $masks = substr($buffer, 4, 4);
+                $data = substr($buffer, 8);
+            } else if ($len === 127)  {
+                $masks = substr($buffer, 10, 4);
+                $data = substr($buffer, 14);
+            } else  {
+                $masks = substr($buffer, 2, 4);
+                $data = substr($buffer, 6);
+            }
+            for ($index = 0; $index < strlen($data); $index++) {
+                $decoded .= $data[$index] ^ $masks[$index % 4];
+            }
+            return $decoded;
+        }
+        // 返回帧信息处理
+        function frame($s) {
+            $a = str_split($s, 125);
+            if (count($a) == 1) {
+                return "\x81" . chr(strlen($a[0])) . $a[0];
+            }
+            $ns = "";
+            foreach ($a as $o) {
+                $ns .= "\x81" . chr(strlen($o)) . $o;
+            }
+            return $ns;
+        }
+
+// 返回数据
+        function send($client, $msg){
+            $msg = $this->frame($msg);
+            return $msg;
+        }
+
+    function say($msg = ""){
+        echo $msg . "\n";
+    }
+    function log($msg = ""){
+        if ($this->debug){
+            echo $msg . "\n";
+        }
+    }
 
 }
+
+
+
+

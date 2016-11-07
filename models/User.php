@@ -31,9 +31,11 @@ class User extends ActiveRecord
 //            ['email','required','message' => '邮箱不能为空'],
             ['email','email','message' => '邮箱格式不正确','on' => 'reg'],
             ['email','unique','message' => '邮箱已被注册','on' => 'reg'],
-            ['password','validatePass','on' => 'login']
+            ['password','validatePass','on' => 'login'],
+//            ['create_at','addTime','on' => Model::SCENARIO_DEFAULT]
         ];
     }
+
 
     public function validatePass()
     {

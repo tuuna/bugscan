@@ -12,6 +12,7 @@ $config = [
             'class' => 'api\modules\v1\Module',
         ],
     ],*/
+
      'components' => [
         /*'urlManager' => [
             'enablePrettyUrl' => true,
@@ -24,6 +25,8 @@ $config = [
                 ]
             ],
         ],*/
+
+
 
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation

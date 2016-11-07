@@ -8,7 +8,23 @@ $config = [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'app\commands',
+    'controllerMap' => [
+        'websocket' => 'morozovsk\yii2websocket\console\controllers\WebsocketController'
+    ],
     'components' => [
+        'websocket' => [
+            'class' => 'morozovsk\yii2websocket\Connection',
+            'servers' => [
+                'chat3' => [
+                    'class' => 'morozovsk\websocket\examples\chat3\Chat3WebsocketDaemonHandler',
+                    'pid' => '/tmp/websocket_chat.pid',
+                    'websocket' => 'tcp://127.0.0.1:8081',
+                    'localsocket' => 'tcp://127.0.0.1:8084',
+                    //'master' => 'tcp://127.0.0.1:8020',
+                    //'eventDriver' => 'event'
+                ]
+            ],
+        ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],

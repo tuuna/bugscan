@@ -1,8 +1,3 @@
-<!--
-rabbitmq 10.0.68.69
-Haruna
-moegirl
-queque-->
 <!doctype html>
 <html class="no-js" lang="">
 <head>

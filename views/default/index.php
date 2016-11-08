@@ -1,3 +1,7 @@
+<?php
+use yii\helpers\Url;
+use yii\helpers\Html;
+?>
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
@@ -38,9 +42,9 @@
     <script type="text/javascript" src="/assets/js/jquery.localscroll-1.2.7-min.js"></script>
     <!-- prettyPhoto Initialization -->
     <script type="text/javascript" charset="utf-8">
-        $(document).ready(function(){
-            $("a[rel^='prettyPhoto']").prettyPhoto();
-            var wsServer = 'ws://127.0.0.1:8083';
+//        $(document).ready(function(){
+
+          /*  var wsServer = 'ws://127.0.0.1:1880';
             var ws = new WebSocket(wsServer);
             ws.onopen = function(){
                 console.log("握手成功");
@@ -55,11 +59,55 @@
                     ws.send($("input[your-domain]").value + '-' + 'xor');
                 } else if($("input[sql]").value != 1 && $("input[xor]").value != 1 && $("input[other]").value != '')
                     ws.send($("input[your-domain]").value + '-' + $("input[other]").value);
-            }
+            }*/
+//        });
+
+//        $('sub').addEventListener('click', getMsg, false);
+
+        $(function(){
+            $("a[rel^='prettyPhoto']").prettyPhoto();
+            var $btn = $("#btn");
+            $btn.bind("click",{btn:$btn},function(evdata){
+                var bug_type = '';
+                if($("input[name='sql']:checked") &&   $("input[name='other']").val() == '') {
+                     bug_type = "sql";
+                } else if($("input[name='xor']:checked") &&   $("input[name='other']").val() == '') {
+                     bug_type = "xor";
+                } else if($("input[name='other']").val() != '') {
+                     bug_type = $("input[name='other']").val();
+                } else {
+                    jQuery.error('数据错误');
+                }
+                $.ajax({
+                    type:"POST",
+                    dataType:"json",
+                    url:$btn.attr('formaction'),
+                    timeout:80000,     //ajax请求超时时间80秒
+                    data:{time:"80",domain:$("#your-domain").val(),bug_type:bug_type}, //40秒后无论结果服务器都返回数据
+                    success:function(data){
+                        //从服务器得到数据，显示数据并继续查询
+                        if(data.success=="1"){
+                            $("#msg").append("<br>"+data.text);
+//                            evdata.data.btn.click();
+                        }
+                        //未从服务器得到数据，继续查询
+                        if(data.success=="0"){
+                            $("#msg").append("<br>[无数据]");
+//                            evdata.data.btn.click();
+                        }
+                    },
+                    //Ajax请求超时，继续查询
+                    error:function(XMLHttpRequest,textStatus,errorThrown){
+                        if(textStatus=="timeout"){
+                            $("#msg").append("<br>[超时]");
+                            evdata.data.btn.click();
+                        }
+                    }
+
+                });
+            });
+
         });
-
-        $('sub').addEventListener('click', getMsg, false);
-
     </script>
 </head>
 <body>
@@ -70,11 +118,11 @@
             <div class="container">
                 <!-- Responsive Navbar Part 1: Button for triggering responsive navbar (not covered in tutorial). Include responsive CSS to utilize. -->
                 <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </a>
-                <h1 class="brand"><a href="#top">hantasa</a></h1>
+                <h1 class="brand"><a href="#top">漏洞检测平台</a></h1>
                 <!-- Responsive Navbar Part 2: Place all navbar contents you want collapsed withing .navbar-collapse.collapse. -->
                 <nav class="pull-right nav-collapse collapse">
                     <ul id="menu-main" class="nav">
-                        <li><a title="portfolio" href="<?php echo yii\helpers\Url::to(['upload/index']);?>">上传漏洞</a></li>
+                        <li><a title="portfolio" href="<?php echo Url::to(['upload/index']);?>">上传漏洞</a></li>
                         <li><a title="repository" href="#">漏洞仓库</a></li>
                         <li><a title="services" href="#services">联系我们</a></li>
                     </ul>
@@ -96,12 +144,12 @@
             <div class="row">
                 <div class="span12">
                     <h2>输入您要检测的域名，并选择脚本类型，下方实时显示检测结果</h2>
-                    <input type="text" name="your-domain" placeholder="域名..." class="cform-text" size="40" title="your email">
+                    <input type="text" name="your-domain" id="your-domain" placeholder="域名..." class="cform-text" size="40" title="your email">
                     <br>
-                    <input type="checkbox" value="sql注入" name="sql" id="sql"><span style="color: white">sql注入</span>
-                    <input type="checkbox" value="XOR" name="xor" id="xor"><span style="color:white">XOR</span>
-                    <input type="text" placeholder="输入您已经上传的脚本的名字" id="other" name="other" class = 'col-md-4' style="height: 10px;width: 300px">其它
-                    <input type="submit" value="开始检测" class="cform-submit" id = "sub" name="sub">
+                    <input type="checkbox" value="sql" name="sql" id="sql"><span style="color: white">sql注入</span>
+                    <input type="checkbox" value="xor" name="xor" id="xor"><span style="color:white">XOR</span>
+                    <input type="text" placeholder="输入您已经上传的脚本的名字" id="other" name="other" class = 'col-md-4' style="height: 10px;width: 300px" value="">其它
+                    <input type="button" value="开始检测" class="cform-submit" id = "btn" formaction="<?php echo yii\helpers\Url::to(['default/server']);?>">
                 </div>
             </div>
             <div class="row">
@@ -127,7 +175,7 @@
 
     <div>
 
-        <center><h2>啦啦啦</h2></center>
+        <center><h2 id="msg">啦啦啦</h2></center>
         <br>
     </div>
     <!-- /.container -->

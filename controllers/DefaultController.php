@@ -5,45 +5,53 @@
  * Date: 16-10-28
  * Time: 下午11:17
  */
-/**
- * rabbitmq
- * HOST 10.0.68.69
- * USERNAME Haruna
- * PASSWORD moegirl
- * QUEUENAME queque
- */
 
 namespace app\controllers;
 use yii\web\Controller;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use Yii;
 
 class DefaultController extends Controller {
+    public $enableCsrfValidation = false;
+    public function actionIndex() {
+        return $this->renderPartial('index');
+    }
 
-    public function actionIndex()
-    {
-        static $k = 0;
-        $msgs = [];
-        $msg = [];
-        $socket_msg = new WS('127.0.0.1','8083');
-        echo $socket_msg;
-        $fibonacci_rpc = new FibonacciRpcClient();
-        $responses = $fibonacci_rpc->call('script');
-        foreach ((array)$responses as $key => $response) {
-            if($response != 'end') {
-                $msg[$key] = $response;
-            } else {
-                for($i = 0; $i<count($msg);$i++) {
-                    $msgs[$k][$i] = $msg;
+    public function actionServer() {
+
+//        echo json_encode(['success' => 1,'text' => 'ok']);
+//        exit();
+        if(Yii::$app->request->isAjax) {
+            $datas = Yii::$app->request->post();
+            $fibonacci_rpc = new FibonacciRpcClient();
+            $responses = $fibonacci_rpc->call($datas['domain'] . '+' . $datas['bug_type']);
+            if(empty($datas['time']))exit();
+            set_time_limit(0);//无限请求超时时间
+            $i=0;
+            while (true){
+                //sleep(1);
+                usleep(500000);//0.5秒
+                $i++;
+
+                //若得到数据则马上返回数据给客服端，并结束本次请求
+                $rand=rand(1,999);
+                if($rand<=15){
+                    $arr=array('success'=>"1",'text'=>$responses);
+                    echo json_encode($arr);
+                    exit();
                 }
-                $k++;
-                $msg = [];
-                continue;
-            }
-        }
 
-//        var_dump(" [.] Got ", $msgs, "\n") ;
-        return $this->renderPartial('index',['msg' => $msgs]);
+                //服务器($_POST['time']*0.5)秒后告诉客服端无数据
+                if($i==$_POST['time']){
+                    $arr=array('success'=>"0",'msg' => 'no data');
+                    echo json_encode($arr);
+                    exit();
+                }
+            }
+        } else {
+            echo json_encode(['success' => 0,'text' => 'failed to accept datas']);
+        }
     }
 }
 
@@ -94,7 +102,7 @@ class FibonacciRpcClient {
     }
 }
 
-Class WS {
+/*class WS {
     var $master;
     var $sockets = array();
     var $debug = false;
@@ -138,12 +146,20 @@ Class WS {
                         }
                         else{
                             $buffer = $this->decode($buffer);
-                            return $this->send($socket, $buffer);
+                            $this->send($socket, $buffer);
                         }
                     }
                 }
             }
         }
+    }
+
+    function send($client, $msg){
+        $this->log("> " . $msg);
+        $msg = $this->frame($msg);
+        return $msg;
+//        socket_write($client, $msg, strlen($msg));
+//        $this->log("! " . strlen($msg));
     }
     function connect($socket){
         array_push($this->sockets, $socket);
@@ -158,70 +174,71 @@ Class WS {
             array_splice($this->sockets, $index, 1);
         }
     }
-        function getKey($req) {
-            $key = null;
-            if (preg_match("/Sec-WebSocket-Key: (.*)\r\n/", $req, $match)) {
-                $key = $match[1];
-            }
-            return $key;
-        }
-        function encry($req){
-            $key = $this->getKey($req);
-            $mask = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    function doHandShake($socket, $buffer){
+        $this->log("\nRequesting handshake...");
+        $this->log($buffer);
+        list($resource, $host, $origin, $key) = $this->getHeaders($buffer);
+        $this->log("Handshaking...");
+        $upgrade  = "HTTP/1.1 101 Switching Protocol\r\n" .
+            "Upgrade: websocket\r\n" .
+            "Connection: Upgrade\r\n" .
+            "Sec-WebSocket-Accept: " . $this->calcKey($key) . "\r\n\r\n";  //必须以两个回车结尾
+        $this->log($upgrade);
+        $sent = socket_write($socket, $upgrade, strlen($upgrade));
+        $this->handshake=true;
+        $this->log("Done handshaking...");
+        return true;
+    }
 
-            return base64_encode(sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
-        }
-        function dohandshake($socket, $req){
-            // 获取加密key
-            $acceptKey = $this->encry($req);
-            $upgrade = "HTTP/1.1 101 Switching Protocols\r\n" .
-                "Upgrade: websocket\r\n" .
-                "Connection: Upgrade\r\n" .
-                "Sec-WebSocket-Accept: " . $acceptKey . "\r\n" .
-                "\r\n";
+    function getHeaders($req){
+        $r = $h = $o = $key = null;
+        if (preg_match("/GET (.*) HTTP/"              ,$req,$match)) { $r = $match[1]; }
+        if (preg_match("/Host: (.*)\r\n/"             ,$req,$match)) { $h = $match[1]; }
+        if (preg_match("/Origin: (.*)\r\n/"           ,$req,$match)) { $o = $match[1]; }
+        if (preg_match("/Sec-WebSocket-Key: (.*)\r\n/",$req,$match)) { $key = $match[1]; }
+        return array($r, $h, $o, $key);
+    }
 
-            // 写入socket
-            socket_write(socket,$upgrade.chr(0), strlen($upgrade.chr(0)));
-            // 标记握手已经成功，下次接受数据采用数据帧格式
-            $this->handshake = true;
-        }
-        function decode($buffer)  {
-            $len = $masks = $data = $decoded = null;
-            $len = ord($buffer[1]) & 127;
+    function calcKey($key){
+        //基于websocket version 13
+        $accept = base64_encode(sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+        return $accept;
+    }
 
-            if ($len === 126)  {
-                $masks = substr($buffer, 4, 4);
-                $data = substr($buffer, 8);
-            } else if ($len === 127)  {
-                $masks = substr($buffer, 10, 4);
-                $data = substr($buffer, 14);
-            } else  {
-                $masks = substr($buffer, 2, 4);
-                $data = substr($buffer, 6);
-            }
-            for ($index = 0; $index < strlen($data); $index++) {
-                $decoded .= $data[$index] ^ $masks[$index % 4];
-            }
-            return $decoded;
-        }
-        // 返回帧信息处理
-        function frame($s) {
-            $a = str_split($s, 125);
-            if (count($a) == 1) {
-                return "\x81" . chr(strlen($a[0])) . $a[0];
-            }
-            $ns = "";
-            foreach ($a as $o) {
-                $ns .= "\x81" . chr(strlen($o)) . $o;
-            }
-            return $ns;
-        }
+    function decode($buffer) {
+        $len = $masks = $data = $decoded = null;
+        $len = ord($buffer[1]) & 127;
 
-// 返回数据
-        function send($client, $msg){
-            $msg = $this->frame($msg);
-            return $msg;
+        if ($len === 126) {
+            $masks = substr($buffer, 4, 4);
+            $data = substr($buffer, 8);
         }
+        else if ($len === 127) {
+            $masks = substr($buffer, 10, 4);
+            $data = substr($buffer, 14);
+        }
+        else {
+            $masks = substr($buffer, 2, 4);
+            $data = substr($buffer, 6);
+        }
+        for ($index = 0; $index < strlen($data); $index++) {
+            $decoded .= $data[$index] ^ $masks[$index % 4];
+        }
+        return $decoded;
+    }
+
+    function frame($s){
+        $a = str_split($s, 125);
+        if (count($a) == 1){
+            return "\x81" . chr(strlen($a[0])) . $a[0];
+        }
+        $ns = "";
+        foreach ($a as $o){
+            $ns .= "\x81" . chr(strlen($o)) . $o;
+        }
+        return $ns;
+    }
+
 
     function say($msg = ""){
         echo $msg . "\n";
@@ -231,9 +248,7 @@ Class WS {
             echo $msg . "\n";
         }
     }
-
-}
-
+}*/
 
 
 

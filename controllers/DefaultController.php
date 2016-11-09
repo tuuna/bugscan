@@ -13,7 +13,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Yii;
 
 class DefaultController extends Controller {
-    public $enableCsrfValidation = false;
+    public $enableCsrfValidation = false; //这里是重点，主要是要拦截csrf不然会400或500
     public function actionIndex() {
         return $this->renderPartial('index');
     }

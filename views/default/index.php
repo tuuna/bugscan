@@ -88,7 +88,7 @@ use yii\helpers\Html;
                         //从服务器得到数据，显示数据并继续查询
                         if(data.success=="1"){
                             $("#msg").append("<br>"+data.text);
-//                            evdata.data.btn.click();
+                            evdata.data.btn.click();
                         }
                         //未从服务器得到数据，继续查询
                         if(data.success=="0"){

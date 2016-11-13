@@ -92,8 +92,8 @@ use yii\helpers\Html;
                         }
                         //未从服务器得到数据，继续查询
                         if(data.success=="0"){
-                            $("#msg").append("<br>[无数据]");
-//                            evdata.data.btn.click();
+                            $("#msg").append("<br>"+data.msg);
+                            evdata.data.btn.click();
                         }
                     },
                     //Ajax请求超时，继续查询
@@ -175,7 +175,7 @@ use yii\helpers\Html;
 
     <div>
 
-        <center><h2 id="msg">啦啦啦</h2></center>
+        <center><h2 id="msg"></h2></center>
         <br>
     </div>
     <!-- /.container -->

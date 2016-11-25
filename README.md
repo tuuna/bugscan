@@ -1,4 +1,4 @@
-# 
+# 漏洞检测平台
 
 > A platform to scan the bugs of a certain website like [bugscan](http://www.bugscan.net/)
 

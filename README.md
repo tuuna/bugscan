@@ -1,10 +1,6 @@
-# 
+# 漏洞检测平台
 
 > A platform to scan the bugs of a certain website like [bugscan](http://www.bugscan.net/)
-
-[![Yii Version](https://poser.pugx.org/yiisoft/yii2/v/stable.png)](https://packagist.org/packages/yiisoft/yii2)
-
-[![Composer](https://poser.pugx.org/yiisoft/yii2/v/stable.png)](https://getcomposer.org/)
 
 ## 版本一(v1)
 

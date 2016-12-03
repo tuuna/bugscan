@@ -64,50 +64,74 @@ use yii\helpers\Html;
 
 //        $('sub').addEventListener('click', getMsg, false);
 
-        $(function(){
+        /*$(function(){
             $("a[rel^='prettyPhoto']").prettyPhoto();
             var $btn = $("#btn");
             $btn.bind("click",{btn:$btn},function(evdata){
                 var bug_type = '';
                 if($("input[name='sql']:checked") &&   $("input[name='other']").val() == '') {
-                     bug_type = "sql";
+                     bug_type = "sqlmap";
                 } else if($("input[name='xor']:checked") &&   $("input[name='other']").val() == '') {
                      bug_type = "xor";
                 } else if($("input[name='other']").val() != '') {
                      bug_type = $("input[name='other']").val();
                 } else {
-                    jQuery.error('数据错误');
+                    bug_type = '';
                 }
-                $.ajax({
-                    type:"POST",
-                    dataType:"json",
-                    url:$btn.attr('formaction'),
-                    timeout:80000,     //ajax请求超时时间80秒
-                    data:{time:"80",domain:$("#your-domain").val(),bug_type:bug_type}, //40秒后无论结果服务器都返回数据
-                    success:function(data){
-                        //从服务器得到数据，显示数据并继续查询
-                        if(data.success=="1"){
-                            $("#msg").append("<br>"+data.text);
-                            evdata.data.btn.click();
-                        }
-                        //未从服务器得到数据，继续查询
-                        if(data.success=="0"){
-                            $("#msg").append("<br>"+data.msg);
-                            evdata.data.btn.click();
-                        }
-                    },
-                    //Ajax请求超时，继续查询
-                    error:function(XMLHttpRequest,textStatus,errorThrown){
-                        if(textStatus=="timeout"){
-                            $("#msg").append("<br>[超时]");
-                            evdata.data.btn.click();
-                        }
-                    }
+                    $.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        url: $btn.attr('formaction'),
+                        timeout: 80000,     //ajax请求超时时间80秒
+                        data: {time: "80", domain: $("#your-domain").val(), bug_type: bug_type}, //40秒后无论结果服务器都返回数据
+                        success: function (data) {
+                            //从服务器得到数据，显示数据并继续查询
 
-                });
+                            if (data.success == "1") {
+                                $("#msg").append("<br>" + data.text);
+                            }
+                            //未从服务器得到数据，继续查询
+                            if (data.success == "0") {
+                                $("#msg").append("<br>" + data.msg);
+//                            evdata.data.btn.click();
+                            }
+
+                        },
+                        //Ajax请求超时，继续查询
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            if (textStatus == "timeout") {
+                                $("#msg").append("<br>[超时]");
+                                evdata.data.btn.click();
+                            }
+                        }
+
+                    });
             });
-
-        });
+        });*/
+        $(function() {
+            var $btn = $("#btn");
+            $btn.bind("click",{btn:$btn},function(evdata) {
+                var bug_type = '';
+                if ($("input[name='sql']:checked") && $("input[name='other']").val() == '') {
+                    bug_type = "sqlmap";
+                } else if ($("input[name='xor']:checked") && $("input[name='other']").val() == '') {
+                    bug_type = "xor";
+                } else if ($("input[name='other']").val() != '') {
+                    bug_type = $("input[name='other']").val();
+                } else {
+                    bug_type = '';
+                }
+                ws = new WebSocket("ws://127.0.0.1:2346");
+                ws.onopen = function () {
+                    alert("连接成功");
+                    ws.send('tom');
+                    alert("给服务端发送一个字符串：tom");
+                };
+                ws.onmessage = function (e) {
+                    alert("收到服务端的消息：" + e.data);
+                };
+            })
+        })
     </script>
 </head>
 <body>
@@ -175,7 +199,8 @@ use yii\helpers\Html;
 
     <div>
 
-        <center><h2 id="msg"></h2></center>
+        <center><h2 id="msg">
+            </h2></center>
         <br>
     </div>
     <!-- /.container -->

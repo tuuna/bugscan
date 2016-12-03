@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "451771887c7ca5664496296d1ebf7e43",
-    "content-hash": "8a32767601394e4c0de0e746201a5465",
+    "hash": "2d5b33400044347c26d189c93e5ffb64",
+    "content-hash": "989d8da518e344c546d6809efb6ce0ce",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
@@ -539,6 +539,52 @@
                 "mailer"
             ],
             "time": "2016-07-08 11:51:25"
+        },
+        {
+            "name": "workerman/workerman",
+            "version": "v3.3.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/walkor/Workerman.git",
+                "reference": "c2e66e75a8c461a52a738ba004ef845397ce64ff"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packagist.phpcomposer.com/files/walkor/Workerman/c2e66e75a8c461a52a738ba004ef845397ce64ff.zip",
+                "reference": "c2e66e75a8c461a52a738ba004ef845397ce64ff",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "suggest": {
+                "ext-event": "For better performance."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Workerman\\": "./"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "walkor",
+                    "email": "walkor@workerman.net",
+                    "homepage": "http://www.workerman.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "An asynchronous event driven PHP framework for easily building fast, scalable network applications.",
+            "homepage": "http://www.workerman.net",
+            "keywords": [
+                "asynchronous",
+                "event-loop"
+            ],
+            "time": "2016-11-27 08:23:04"
         },
         {
             "name": "yiisoft/yii2",

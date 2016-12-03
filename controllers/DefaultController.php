@@ -10,51 +10,67 @@ namespace app\controllers;
 use yii\web\Controller;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use Workerman\Worker;
 use Yii;
 
 class DefaultController extends Controller {
     public $enableCsrfValidation = false; //这里是重点，主要是要拦截csrf不然会400或500
     public function actionIndex() {
+
         return $this->renderPartial('index');
     }
 
     public function actionServer() {
-
 //        echo json_encode(['success' => 1,'text' => 'ok']);
 //        exit();
-        if(Yii::$app->request->isAjax) {
-            $datas = Yii::$app->request->post();
-            $fibonacci_rpc = new FibonacciRpcClient();
-            $responses = $fibonacci_rpc->call($datas['domain'].'_'.$datas['bug_type']);
+//            $res = '';
+//            $datas = Yii::$app->request->post();
+//            $fibonacci_rpc = new FibonacciRpcClient();
+//            $res = $fibonacci_rpc->call($datas['bug_type'] . '|' . $datas['domain']);
+//            $result = system('python Yii::$app->basePath/sender.py',$res);
+//            pclose($res);
+            // 创建一个Worker监听2346端口，使用websocket协议通讯
+
+
+  /*          foreach($responses as $item){
+
+                echo ['success' => 1,'text' => $item];
+            }*/
+//            echo $responses;
+
+
+//            $responses = $fibonacci_rpc->call('hello ' . '|'.$datas['domain']);
 
 //            $responses = $fibonacci_rpc->call('script');
-            if(empty($datas['time']))exit();
+            /*if(empty($datas['time']))exit();
             set_time_limit(0);//无限请求超时时间
-            $i=0;
             while (true){
+
+//                echo ['success' => "1",'text' => $responses];
                 //sleep(1);
-                usleep(1000000);//0.5秒
-                $i++;
 
+                usleep(500000);//0.5秒
                 //若得到数据则马上返回数据给客服端，并结束本次请求
-                $rand=rand(1,999);
-                if($rand<=15){
-
+                if($responses != null){
+                    echo "[开始接收]";
                     $arr=array('success'=>"1",'text'=>$responses);
+//                    $responses = '';
                     echo json_encode($arr);
-                    exit();
-                }
+//                    exit();
+//                    continue;
+                }*/
 
                 //服务器($_POST['time']*0.5)秒后告诉客服端无数据
-                if($i==$_POST['time']){
+//                if($i==$_POST['time'] || !$responses){
+               /* if($responses){
                     $arr=array('success'=>"0",'msg' => 'complete!');
                     echo json_encode($arr);
-                    exit();
-                }
-            }
+                    break;
+                }*/
+            /*}
         } else {
             echo json_encode(['success' => 0,'text' => 'failed to accept datas']);
-        }
+        }*/
     }
 }
 
@@ -62,11 +78,12 @@ class FibonacciRpcClient {
     private $connection;
     private $channel;
     private $callback_queue;
-    private $response;
+    private $response = [];
     private $corr_id;
     private $result = '';
 
-    CONST HOST = "10.0.153.80";
+
+    CONST HOST = "10.0.20.97";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";
@@ -84,7 +101,7 @@ class FibonacciRpcClient {
     public function on_response($rep) {
         if($rep->get('correlation_id') == $this->corr_id) {
             $this->result .= $rep->body;
-            $this->response = $rep->body;
+            array_push($this->response,$this->response = $rep->body);
         }
     }
 
@@ -98,6 +115,8 @@ class FibonacciRpcClient {
                 'reply_to' => $this->callback_queue)
         );
         $this->channel->basic_publish($msg, '', 'queue');
+        Yii::$app->session->set('userScan',$this->response);
+
         while($this->response != "end") {
             $this->channel->wait();
         }

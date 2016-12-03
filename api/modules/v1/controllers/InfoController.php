@@ -33,11 +33,14 @@ class InfoController extends ActiveController
         $datas = Yii::$app->getRequest()->getBodyParams();
         if($model->find()->where(['website' => $datas['website']])->one()) {
             echo  json_encode(['status' =>1,'datas' => $model->find()->where(['website' => $datas['website']])->one()->info]);
-        } else {
-            $fibonacci_rpc = new FibonacciRpcClient();
+        } else{
+            echo json_encode(['status' => 1,'datas' => '您已连接到次接口']);
+            /*$fibonacci_rpc = new FibonacciRpcClient();
             $responses = $fibonacci_rpc->call($datas['website'].'_'.$datas['type']);
-            $model->save(['info' => $responses]);
-            echo  json_encode(['status' =>1,'datas' => $responses]);
+            if($model->save(['info' => $responses]))
+                echo  json_encode(['status' =>1,'datas' => $responses]);
+            else
+                echo*/
         }
     }
 }
@@ -50,7 +53,7 @@ class FibonacciRpcClient {
     private $corr_id;
     private $result = '';
 
-    CONST HOST = "10.0.153.80";
+    CONST HOST = "10.0.20.97";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";

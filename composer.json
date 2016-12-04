@@ -20,7 +20,9 @@
         "yiisoft/yii2-swiftmailer": "~2.0.0",
         "php-amqplib/php-amqplib": "2.6.*",
         "morozovsk/yii2-websocket": "^1.0",
-        "workerman/workerman": "^3.3"
+        "workerman/workerman": "^3.3",
+        "workerman/gateway-worker": "^3.0",
+        "workerman/gatewayclient": "^3.0"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.0.0",

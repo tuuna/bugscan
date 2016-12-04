@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2d5b33400044347c26d189c93e5ffb64",
-    "content-hash": "989d8da518e344c546d6809efb6ce0ce",
+    "hash": "946f21432a3a7f4f849f40bc96d492ea",
+    "content-hash": "a9ec1f60bd26cc42b9531d94f0ed4e75",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
@@ -539,6 +539,67 @@
                 "mailer"
             ],
             "time": "2016-07-08 11:51:25"
+        },
+        {
+            "name": "workerman/gateway-worker",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/walkor/GatewayWorker.git",
+                "reference": "54f36ebe07f58c0ec18deb02fbaaf1a4893910d5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packagist.phpcomposer.com/files/walkor/GatewayWorker/54f36ebe07f58c0ec18deb02fbaaf1a4893910d5.zip",
+                "reference": "54f36ebe07f58c0ec18deb02fbaaf1a4893910d5",
+                "shasum": ""
+            },
+            "require": {
+                "workerman/workerman": ">=3.1.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GatewayWorker\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "homepage": "http://www.workerman.net",
+            "keywords": [
+                "communication",
+                "distributed"
+            ],
+            "time": "2016-11-13 13:01:54"
+        },
+        {
+            "name": "workerman/gatewayclient",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/walkor/GatewayClient.git",
+                "reference": "0e47cfcdeedd25aad09b4f720e9b74a718f655aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packagist.phpcomposer.com/files/walkor/GatewayClient/0e47cfcdeedd25aad09b4f720e9b74a718f655aa.zip",
+                "reference": "0e47cfcdeedd25aad09b4f720e9b74a718f655aa",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GatewayClient\\": "./"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "homepage": "http://www.workerman.net",
+            "time": "2016-11-25 04:58:12"
         },
         {
             "name": "workerman/workerman",

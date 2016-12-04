@@ -121,7 +121,25 @@ use yii\helpers\Html;
                 } else {
                     bug_type = '';
                 }
-                ws = new WebSocket("ws://127.0.0.1:2346");
+                // 与GatewayWorker建立websocket连接，域名和端口改为你实际的域名端口
+                ws = new WebSocket("ws://127.0.0.1:8282");
+// 服务端主动推送消息时会触发这里的onmessage
+                ws.onmessage = function(e){
+                    // json数据转换成js对象
+                    var data = eval("("+e.data+")");
+                    var type = data.type || '';
+                    switch(type){
+                        // Events.php中返回的init类型的消息，将client_id发给后台进行uid绑定
+                        case 'init':
+                            // 利用jquery发起ajax请求，将client_id发给后端进行uid绑定
+                            $.post('<?php echo yii\helpers\Url::to(['default/server']);?>', {client_id: data.client_id,domain:$("#your-domain").val(),bug_type: bug_type}, function(data){}, 'json');
+                            break;
+                        // 当mvc框架调用GatewayClient发消息时直接alert出来
+                        default :
+                            $("#msg").append("<br>" + data.msg);
+                    }
+                };
+                /*ws = new WebSocket("ws://127.0.0.1:2346");
                 ws.onopen = function () {
                     alert("连接成功");
                     ws.send('tom');
@@ -129,7 +147,7 @@ use yii\helpers\Html;
                 };
                 ws.onmessage = function (e) {
                     alert("收到服务端的消息：" + e.data);
-                };
+                };*/
             })
         })
     </script>

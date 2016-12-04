@@ -11,6 +11,9 @@ use yii\web\Controller;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Workerman\Worker;
+//use GatewayWorker\Gateway;
+use Workerman\Autoloader;
+use GatewayClient\Gateway;
 use Yii;
 
 class DefaultController extends Controller {
@@ -21,12 +24,31 @@ class DefaultController extends Controller {
     }
 
     public function actionServer() {
+        $data = Yii::$app->request->post();
+        $fibonacci_rpc = new FibonacciRpcClient();
+//        $res = $fibonacci_rpc->call($data['bug_type'] . '|' . $data['domain']);
+        do{
+            $res = $fibonacci_rpc->call($data['bug_type'] . '|' . $data['domain']);
+            Gateway::bindUid($data['client_id'],Yii::$app->session->get('uid')) ?
+                Gateway::sendToClient($data['client_id'],json_encode([
+                    'msg' => $res,
+                    'type' => 'other',
+                    'client_id' => $data['client_id']
+                ])) :
+                Gateway::sendToClient($data['client_id'],json_encode([
+                    'msg' => '连接失败哦',
+                    'type' => 'other',
+                    'client_id' => $data['client_id']
+                ]));
+        }while($res == 'complete');
+
+//            $this->send_message(Yii::$app->session->get('uid'),'连接成功哦') :
+//            $this->send_message(Yii::$app->session->get('uid'),'连接失败哦');
 //        echo json_encode(['success' => 1,'text' => 'ok']);
 //        exit();
 //            $res = '';
 //            $datas = Yii::$app->request->post();
-//            $fibonacci_rpc = new FibonacciRpcClient();
-//            $res = $fibonacci_rpc->call($datas['bug_type'] . '|' . $datas['domain']);
+
 //            $result = system('python Yii::$app->basePath/sender.py',$res);
 //            pclose($res);
             // 创建一个Worker监听2346端口，使用websocket协议通讯
@@ -72,15 +94,30 @@ class DefaultController extends Controller {
             echo json_encode(['success' => 0,'text' => 'failed to accept datas']);
         }*/
     }
+
+    public function bind($client_id,$uid) {
+        Gateway::$registerAddress = '127.0.0.1:1238';
+
+// 假设用户已经登录，用户uid和群组id在session中
+//        $uid      = $_SESSION['uid'];
+// client_id与uid绑定
+        Gateway::bindUid($client_id, $uid);
+    }
+
+    public function send_message($uid,$message) {
+        Gateway::$registerAddress = '127.0.0.1:1238';
+
+// 向任意uid的网站页面发送数据
+        Gateway::sendToUid($uid, $message);
+    }
 }
 
 class FibonacciRpcClient {
     private $connection;
     private $channel;
     private $callback_queue;
-    private $response = [];
+    private $response = '';
     private $corr_id;
-    private $result = '';
 
 
     CONST HOST = "10.0.20.97";
@@ -100,13 +137,12 @@ class FibonacciRpcClient {
     }
     public function on_response($rep) {
         if($rep->get('correlation_id') == $this->corr_id) {
-            $this->result .= $rep->body;
-            array_push($this->response,$this->response = $rep->body);
+            $this->response = $rep->body;
+            return $rep->body;
         }
     }
 
     public function call($n) {
-        $this->response = null;
         $this->corr_id = uniqid();
 
         $msg = new AMQPMessage(
@@ -115,12 +151,10 @@ class FibonacciRpcClient {
                 'reply_to' => $this->callback_queue)
         );
         $this->channel->basic_publish($msg, '', 'queue');
-        Yii::$app->session->set('userScan',$this->response);
-
         while($this->response != "end") {
             $this->channel->wait();
         }
-        return $this->result;
+        return 'complete';
     }
 }
 

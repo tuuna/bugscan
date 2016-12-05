@@ -33,7 +33,7 @@ class InfoController extends ActiveController
     {
 //        $model = new Info();
         $data = Yii::$app->getRequest()->getBodyParams();
-        if (!isset(Yii::$app->session->get('uid')))
+        if (!empty(Yii::$app->session->get('uid')))
             echo json_encode(['status' => 0, 'data' => '用户未登录']);
         Gateway::bindUid($data['client_id'], Yii::$app->session->get('uid'));
         $fibonacci_rpc = new FibonacciRpcClient($data['client_id']);

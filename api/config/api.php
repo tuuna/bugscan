@@ -14,6 +14,7 @@ $config = [
             // Enable JSON Input:
             'parsers' => [
                 'application/json' => 'yii\web\JsonParser',
+                'text/json' => 'yii\web\JsonParser'
             ]
         ],
         'log' => [
@@ -33,7 +34,9 @@ $config = [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                ['class' => 'yii\rest\UrlRule', 'controller' => 'v1/user'],
+//                ['class' => 'yii\rest\UrlRule', 'controller' => 'v1/user'],
+                'POST v1/user/login' => 'v1/user/login',
+                'POST v1/user/reg' => 'v1/user/reg',
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'v1/info'],
             ],
         ],

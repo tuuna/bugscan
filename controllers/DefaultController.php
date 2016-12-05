@@ -8,6 +8,8 @@
 
 namespace app\controllers;
 use yii\web\Controller;
+//use yii\web\CommonController;
+//use yii\controllers\CommonController;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Workerman\Worker;
@@ -16,7 +18,7 @@ use Workerman\Autoloader;
 use GatewayClient\Gateway;
 use Yii;
 
-class DefaultController extends Controller {
+class DefaultController extends CommonController {
     public $enableCsrfValidation = false; //这里是重点，主要是要拦截csrf不然会400或500
     public function actionIndex() {
 
@@ -25,12 +27,10 @@ class DefaultController extends Controller {
 
     public function actionServer() {
         $data = Yii::$app->request->post();
-        $fibonacci_rpc = new FibonacciRpcClient();
-//        $res = $fibonacci_rpc->call($data['bug_type'] . '|' . $data['domain']);
-        do{
-            $res = $fibonacci_rpc->call($data['bug_type'] . '|' . $data['domain']);
-            Gateway::bindUid($data['client_id'],Yii::$app->session->get('uid')) ?
-                Gateway::sendToClient($data['client_id'],json_encode([
+        Gateway::bindUid($data['client_id'],Yii::$app->session->get('uid'));
+        $fibonacci_rpc = new FibonacciRpcClient($data['client_id']);
+        $fibonacci_rpc->call($data['bug_type'] . '|' . $data['domain']);
+                /*Gateway::sendToClient($data['client_id'],json_encode([
                     'msg' => $res,
                     'type' => 'other',
                     'client_id' => $data['client_id']
@@ -39,8 +39,7 @@ class DefaultController extends Controller {
                     'msg' => '连接失败哦',
                     'type' => 'other',
                     'client_id' => $data['client_id']
-                ]));
-        }while($res == 'complete');
+                ]));*/
 
 //            $this->send_message(Yii::$app->session->get('uid'),'连接成功哦') :
 //            $this->send_message(Yii::$app->session->get('uid'),'连接失败哦');
@@ -118,6 +117,7 @@ class FibonacciRpcClient {
     private $callback_queue;
     private $response = '';
     private $corr_id;
+    private $client_id;
 
 
     CONST HOST = "10.0.20.97";
@@ -125,7 +125,9 @@ class FibonacciRpcClient {
     CONST USER = "Haruna";
     CONST PASS = "moegirl";
 
-    public function __construct() {
+    public function __construct($client_id) {
+//        $this->callback = $func;
+        $this->client_id = $client_id;
         $this->connection = new AMQPStreamConnection(
             self::HOST, self::PORT, self::USER, self::PASS);
         $this->channel = $this->connection->channel();
@@ -138,7 +140,12 @@ class FibonacciRpcClient {
     public function on_response($rep) {
         if($rep->get('correlation_id') == $this->corr_id) {
             $this->response = $rep->body;
-            return $rep->body;
+            Gateway::sendToClient($this->client_id,json_encode([
+                'msg' => $this->response,
+                'type' => 'other'
+            ]));
+            /*if($this->response != "end")
+                return $rep->body;*/
         }
     }
 

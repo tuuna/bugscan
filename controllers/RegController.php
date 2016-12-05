@@ -37,4 +37,5 @@ class RegController extends Controller {
         }
         return $this->render('reg',['model' => $model]);
     }
+
 }

@@ -8,9 +8,10 @@
 
 namespace app\api\modules\v1\controllers;
 use yii\rest\ActiveController;
-use app\models\Info;
+//use app\models\Info;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use GatewayClient\Gateway;
 use Yii;
 
 class InfoController extends ActiveController
@@ -18,10 +19,11 @@ class InfoController extends ActiveController
 
     public $modelClass = 'app\models\Info';
 
-    public function actions() {
+    public function actions()
+    {
         $actions = parent::actions();
         // 禁用""index,delete" 和 "create" 操作
-        unset($actions['index'],$actions['delete'], $actions['create'],$actions['view']);
+        unset($actions['index'], $actions['delete'], $actions['create'], $actions['view']);
         return $actions;
 
     }
@@ -29,19 +31,13 @@ class InfoController extends ActiveController
     //重写create的业务实现
     public function actionCreate()
     {
-        $model = new Info();
-        $datas = Yii::$app->getRequest()->getBodyParams();
-        if($model->find()->where(['website' => $datas['website']])->one()) {
-            echo  json_encode(['status' =>1,'datas' => $model->find()->where(['website' => $datas['website']])->one()->info]);
-        } else{
-            echo json_encode(['status' => 1,'datas' => '您已连接到次接口']);
-            /*$fibonacci_rpc = new FibonacciRpcClient();
-            $responses = $fibonacci_rpc->call($datas['website'].'_'.$datas['type']);
-            if($model->save(['info' => $responses]))
-                echo  json_encode(['status' =>1,'datas' => $responses]);
-            else
-                echo*/
-        }
+//        $model = new Info();
+        $data = Yii::$app->getRequest()->getBodyParams();
+        if (!isset(Yii::$app->session->get('uid')))
+            echo json_encode(['status' => 0, 'data' => '用户未登录']);
+        Gateway::bindUid($data['client_id'], Yii::$app->session->get('uid'));
+        $fibonacci_rpc = new FibonacciRpcClient($data['client_id']);
+        $fibonacci_rpc->call($data['type'] . '|' . $data['website']);
     }
 }
 
@@ -49,16 +45,19 @@ class FibonacciRpcClient {
     private $connection;
     private $channel;
     private $callback_queue;
-    private $response;
+    private $response = '';
     private $corr_id;
-    private $result = '';
+    private $client_id;
+
 
     CONST HOST = "10.0.20.97";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";
 
-    public function __construct() {
+    public function __construct($client_id) {
+//        $this->callback = $func;
+        $this->client_id = $client_id;
         $this->connection = new AMQPStreamConnection(
             self::HOST, self::PORT, self::USER, self::PASS);
         $this->channel = $this->connection->channel();
@@ -70,13 +69,15 @@ class FibonacciRpcClient {
     }
     public function on_response($rep) {
         if($rep->get('correlation_id') == $this->corr_id) {
-            $this->result .= $rep->body;
             $this->response = $rep->body;
+            Gateway::sendToClient($this->client_id,json_encode([
+                'msg' => $this->response,
+                'type' => 'other'
+            ]));
         }
     }
 
     public function call($n) {
-        $this->response = null;
         $this->corr_id = uniqid();
 
         $msg = new AMQPMessage(
@@ -88,6 +89,7 @@ class FibonacciRpcClient {
         while($this->response != "end") {
             $this->channel->wait();
         }
-        return $this->result;
+        return 'complete';
     }
 }
+

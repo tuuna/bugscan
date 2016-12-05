@@ -122,7 +122,8 @@ use yii\helpers\Html;
                     bug_type = '';
                 }
                 // 与GatewayWorker建立websocket连接，域名和端口改为你实际的域名端口
-                ws = new WebSocket("ws://127.0.0.1:8282");
+                ws = new WebSocket("ws://" + window.location.host.split(':')[0] + ':8282');
+//                ws = new WebSocket("ws://127.0.0.1:8282");
 // 服务端主动推送消息时会触发这里的onmessage
                 ws.onmessage = function(e){
                     // json数据转换成js对象
@@ -217,8 +218,7 @@ use yii\helpers\Html;
 
     <div>
 
-        <center><h2 id="msg">
-            </h2></center>
+        <h2 id="msg"></h2>
         <br>
     </div>
     <!-- /.container -->

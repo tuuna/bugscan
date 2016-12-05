@@ -7,45 +7,49 @@
  */
 
 namespace app\api\modules\v1\controllers;
-use yii\rest\ActiveController;
-//use Yii;
-//use app\models\User;
+use yii\rest\Controller;
+use Yii;
+use app\models\User;
 
-class UserController extends ActiveController
+class UserController extends Controller
 {
 
-    public $modelClass = 'app\models\User';
-/*
-    public function actions()
+    public function actionLogin()
     {
-        $actions = parent::actions();
-
-        // 注销系统自带的实现方法
-        unset($actions['create']);
-
-        //unset($actions['create']);
-        //unset($actions['update']);
-        //unset($actions['delete']);
-
-        return $actions;
-    }
-
-//覆盖父类的actionIndex方法,并进行重写
-    public function actionCreate()
-    {
+//        public $enableCsrfValidation = false;
         //新建用户
         $model = new User();
         if(Yii::$app->request->isPost) {
             $post = Yii::$app->getRequest()->getBodyParams();
-            if($model->reg($post)) {
-                return json_encode(['status' => 1,'msg' => 'add success','username' => $post['username']]);
+            $data['User']['username'] = $post['username'];
+            $data['User']['password'] = $post['password'];
+            if($id = $model->login($data)) {
+                return json_encode(['status' => 1,'msg' => 'login successfully','uid' => $id,'code' => 200]);
             } else {
-                return json_encode(['status' => 0,'msg' => 'add fail']);
+                return json_encode(['status' => 0,'msg' => '用户名或密码错误']);
             }
         } else {
             return ['status' => 0,'msg' => 'no post data recieved'];
         }
 
-    }*/
+    }
+
+    public function actionReg() {
+        $model = new User();
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->getRequest()->getBodyParams();
+            $data['User']['username'] = $post['username'];
+            $data['User']['password'] = $post['password'];
+            $data['User']['email'] = $post['email'];
+            if($model->reg($data)) {
+                return ['status' => 1,'msg' => '注册成功','code' => 200];
+            } else {
+                return json_encode(['status' => 0,'msg' => '注册失败']);
+            }
+        } else {
+            return ['status' => 0,'msg' => 'no post data recieved'];
+        }
+    }
+
 
 }

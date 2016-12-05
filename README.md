@@ -10,7 +10,7 @@
 
 - 主要使用到了`Yii2基础版`,`RabbitMQ`,`WorkerMan`
 
-- 感谢[@Hanaasagi](github.com/hanaasagi) 的外部`Python脚本`以及`队列消息`的提供
+- 感谢[@Hanaasagi](https://github.com/hanaasagi) 的外部`Python脚本`以及`队列消息`的提供
 
 ### API功能
 

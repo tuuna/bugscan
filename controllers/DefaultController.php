@@ -120,7 +120,7 @@ class FibonacciRpcClient {
     private $client_id;
 
 
-    CONST HOST = "10.0.20.97";
+    CONST HOST = "10.0.91.59";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";

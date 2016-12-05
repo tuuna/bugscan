@@ -12,9 +12,7 @@ use Yii;
 class CommonController extends Controller {
     public function init() {
         if(empty(Yii::$app->session->get('isLogin'))) {
-//            $path = ehco yii\helpers\Url::to(['reg/login']);
-//            return ;
-            $this->redirect('index.php?r=reg/login');
+            $this->redirect('reg/login');
         }
     }
 }

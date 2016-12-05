@@ -33,11 +33,11 @@ class InfoController extends ActiveController
     {
 //        $model = new Info();
         $data = Yii::$app->getRequest()->getBodyParams();
-        if (!empty(Yii::$app->session->get('uid')))
+        if (empty($data['uid']))
             echo json_encode(['status' => 0, 'data' => '用户未登录']);
-        Gateway::bindUid($data['client_id'], Yii::$app->session->get('uid'));
+        Gateway::bindUid($data['client_id'], $data['id']);
         $fibonacci_rpc = new FibonacciRpcClient($data['client_id']);
-        $fibonacci_rpc->call($data['type'] . '|' . $data['website']);
+        $fibonacci_rpc->call('sqlmap' . '|' . $data['website']);
     }
 }
 
@@ -50,7 +50,7 @@ class FibonacciRpcClient {
     private $client_id;
 
 
-    CONST HOST = "10.0.20.97";
+    CONST HOST = "10.0.91.59";
     CONST PORT = 5672;
     CONST USER = "Haruna";
     CONST PASS = "moegirl";
@@ -70,10 +70,7 @@ class FibonacciRpcClient {
     public function on_response($rep) {
         if($rep->get('correlation_id') == $this->corr_id) {
             $this->response = $rep->body;
-            Gateway::sendToClient($this->client_id,json_encode([
-                'msg' => $this->response,
-                'type' => 'other'
-            ]));
+            Gateway::sendToClient($this->client_id,$this->response);
         }
     }
 

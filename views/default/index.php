@@ -111,7 +111,7 @@ use yii\helpers\Html;
         $(function() {
             var $btn = $("#btn");
             $btn.bind("click",{btn:$btn},function(evdata) {
-                var bug_type = '';
+                /*var bug_type = '';
                 if ($("input[name='sql']:checked") && $("input[name='other']").val() == '') {
                     bug_type = "sqlmap";
                 } else if ($("input[name='xor']:checked") && $("input[name='other']").val() == '') {
@@ -120,7 +120,7 @@ use yii\helpers\Html;
                     bug_type = $("input[name='other']").val();
                 } else {
                     bug_type = '';
-                }
+                }*/
                 // 与GatewayWorker建立websocket连接，域名和端口改为你实际的域名端口
                 ws = new WebSocket("ws://" + window.location.host.split(':')[0] + ':8282');
 //                ws = new WebSocket("ws://127.0.0.1:8282");
@@ -133,10 +133,11 @@ use yii\helpers\Html;
                         // Events.php中返回的init类型的消息，将client_id发给后台进行uid绑定
                         case 'init':
                             // 利用jquery发起ajax请求，将client_id发给后端进行uid绑定
-                            $.post('<?php echo yii\helpers\Url::to(['default/server']);?>', {client_id: data.client_id,domain:$("#your-domain").val(),bug_type: bug_type}, function(data){}, 'json');
+                            $.post('<?php echo yii\helpers\Url::to(['default/server']);?>', {client_id: data.client_id,domain:$("#your-domain").val(),bug_type: "sqlmap"}, function(data){}, 'json');
                             break;
                         // 当mvc框架调用GatewayClient发消息时直接alert出来
                         default :
+                            location.hash('msg');
                             $("#msg").append("<br>" + data.msg);
                     }
                 };
@@ -186,13 +187,31 @@ use yii\helpers\Html;
         <div class="container">
             <div class="row">
                 <div class="span12">
-                    <h2>输入您要检测的域名，并选择脚本类型，下方实时显示检测结果</h2>
+                    <h2>输入您要检测的域名,如果您喜欢我们的实时设计，请给我们高分^_^</h2>
                     <input type="text" name="your-domain" id="your-domain" placeholder="域名..." class="cform-text" size="40" title="your email">
-                    <br>
-                    <input type="checkbox" value="sql" name="sql" id="sql"><span style="color: white">sql注入</span>
+                    <!--<input type="checkbox" value="sql" name="sql" id="sql"><span style="color: white">sql注入</span>
                     <input type="checkbox" value="xor" name="xor" id="xor"><span style="color:white">XOR</span>
-                    <input type="text" placeholder="输入您已经上传的脚本的名字" id="other" name="other" class = 'col-md-4' style="height: 10px;width: 300px" value="">其它
-                    <input type="button" value="开始检测" class="cform-submit" id = "btn" formaction="<?php echo yii\helpers\Url::to(['default/server']);?>">
+                    <input type="text" placeholder="输入您已经上传的脚本的名字" id="other" name="other" class = 'col-md-4' style="height: 10px;width: 300px" value="">其它-->
+                    <input type="button" style="font-family: 'Patua One', cursive;
+	color: #fff;
+	width: 185px;
+	height: 60px;
+	text-shadow: none;
+	font-size: 1.3125em; /* 21px */
+	padding:0.5em;
+	letter-spacing: 0.05em;
+	/*margin: 0 0 20px 0;*/
+	/*display: block;*/
+	border: 0;
+	text-transform: none;
+	background: #00a65a !important;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;" value="开始检测" class="cform-submit"  id = "btn" formaction="<?php echo yii\helpers\Url::to(['default/server']);?>">
+
                 </div>
             </div>
             <div class="row">
@@ -216,9 +235,10 @@ use yii\helpers\Html;
         <h1 id="folio-headline">检测结果...</h1>
     </div>
 
-    <div>
+    <div style="color: #00DF00;;background-color: black">
 
-        <h2 id="msg"></h2>
+        <h2 id="msg" name="msg">
+        </h2>
         <br>
     </div>
     <!-- /.container -->
